@@ -1,38 +1,86 @@
 import pyview2 as pv
-import operator
+import numpy as np
+import serial
+import time
+
+## use pythonw main.py command to run on macOS
 
 # Create a model
-class model:
+class WindowModel:
     def __init__(self):
-        self.first = 1.0
-        self.second = 2.0
-        self.result = 3.0
-        self.op = 'add'
+        self.want_to_abort = False
+        self.countA = 0
+        self.countB = 0
+        self.countC = 0  # A'
+        self.countD = 0  # B'
+        self.indA = []
+        self.indB = []
+        self.indC = []
+        self.indD = []
+        self.resultA = []
+        self.resultB = []
+        self.resultC = []
+        self.resultD = []
+        #self.ser = serial.Serial('COM2', 9600, timeout=0)
+        #print(self.ser.is_open)
+        #print(self.ser.name)
 
-    def do_it(self):
-        if self.op == 'add':
-            self.result = operator.add(self.first, self.second)
-        elif self.op == 'subtract':
-            self.result = operator.sub(self.first, self.second)
+    def start(self):
+        self.want_to_abort = False
 
-        print('{0} {1} {2} = {3}'.format(self.first, self.op, self.second, self.result))
-        pv.update()
+        while True:
+            self.countA += 1
+            self.indA.append(self.countA)
+            self.resultA.append(np.random.randn(1))
+            print('about to read')
+            #allbytes = self.ser.read(48)
+            #print(allbytes)
+            print('done reading')
+            pv.update()
+
+            time.sleep(0.1)
+            if self.want_to_abort:
+                break
+
+    def readall(self):
+        print("Reading all bytes!")
+        #print(self.ser.read_all())
+        print("Done reading all bytes!")
+
+    def stop(self):
+        self.want_to_abort = True
 
 
 # Create a view
-textctrl_first = pv.TextCtrl('first', label='First', dtype=float)
-textctrl_second = pv.TextCtrl('second', label='Second', dtype=float)
-textctrl_result = pv.TextCtrl('result', label='Result', dtype=float)
+axes_params = dict(ylabel='Count Rate',
+                   xlabel='time',
+                   title='Count')
+plotA = pv.Plot(x='indA', y='resultA', plot_type='plot', axes_params=dict(ylabel='Count Rate',
+                                                                          xlabel='time',
+                                                                          title='A Counter'))
+plotB = pv.Plot(x='indB', y='resultB', plot_type='plot', axes_params=dict(ylabel='Count Rate',
+                                                                          xlabel='time',
+                                                                          title='B Counter'))
+plotC = pv.Plot(x='indC', y='resultC', plot_type='plot', axes_params=dict(ylabel='Count Rate',
+                                                                          xlabel='time',
+                                                                          title='A\' Counter'))
+plotD = pv.Plot(x='indD', y='resultD', plot_type='plot', axes_params=dict(ylabel='Count Rate',
+                                                                          xlabel='time',
+                                                                          title='B\' Counter'))
+text_A = pv.TextCtrl('countA', label='A Counts', dtype=float)
+text_B = pv.TextCtrl('countB', label='B Counts', dtype=float)
+text_C = pv.TextCtrl('countC', label='C Counts', dtype=float)
+text_D = pv.TextCtrl('countD', label='D Counts', dtype=float)
 
-button_do_it = pv.Button('do_it', label='Do it!')
-combo_op = pv.ComboBox('op', item_list=['add', 'subtract'], label='Operation:')
+button_start = pv.Button('start', label='Start!')
+button_stop = pv.Button('stop', label='Stop', single_threaded=False)
+button_readall = pv.Button('readall', label='ReadAll')
 
-view = pv.View([[textctrl_first, textctrl_second, textctrl_result],
-                [combo_op],
-                [button_do_it]],
-               title='Small Calculator')
+WindowView = pv.View([[plotA, plotB],
+                      [text_A, text_B],
+                      [button_start, button_stop, button_readall]], title='CCU Data')
 
 # Run the program
-pv.run(model, view)
+pv.run(WindowModel, WindowView)
 
 
