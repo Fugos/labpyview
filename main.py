@@ -1,6 +1,6 @@
 import pyview2 as pv
 import numpy as np
-import serial
+import serial, sys
 import time
 
 ## use pythonw main.py command to run on macOS
@@ -21,9 +21,9 @@ class WindowModel:
         self.resultB = []
         self.resultC = []
         self.resultD = []
-        #self.ser = serial.Serial('COM2', 9600, timeout=0)
-        #print(self.ser.is_open)
-        #print(self.ser.name)
+        self.ser = serial.Serial('/dev/cu.usbmodemFA131', 9600, timeout=0)
+        print(self.ser.is_open)
+        print(self.ser.name)
 
     def start(self):
         self.want_to_abort = False
@@ -32,10 +32,19 @@ class WindowModel:
             self.countA += 1
             self.indA.append(self.countA)
             self.resultA.append(np.random.randn(1))
-            print('about to read')
+            #print('about to read')
             #allbytes = self.ser.read(48)
             #print(allbytes)
-            print('done reading')
+            #print('done reading')
+            try:
+                temp = self.ser.readline().decode('utf-8').strip()
+                print(temp)
+                self.resultB.append(float(temp))
+                self.indB.append(self.countA)
+            except (ValueError):
+                print('we goof')
+
+            sys.stdout.flush()
             pv.update()
 
             time.sleep(0.1)
@@ -44,7 +53,7 @@ class WindowModel:
 
     def readall(self):
         print("Reading all bytes!")
-        #print(self.ser.read_all())
+        print(self.ser.read_all().decode('utf-8').strip())
         print("Done reading all bytes!")
 
     def stop(self):
